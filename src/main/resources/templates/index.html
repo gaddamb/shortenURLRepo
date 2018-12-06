@@ -1,0 +1,32 @@
+<!doctype html>
+<html ng-app="shortURL">
+<head>
+<title>Hello AngularJS</title>
+</head>
+
+<body>
+	<div ng-controller="URLController">
+
+		<form ng-submit="submitURL()">
+			<table border="0">
+				<tr>
+					<td>URL</td>
+					<td><input type="text" ng-model="origURL" /></td>
+					
+					<td colspan="2"><input type="submit" value="Shorten URL"
+						class="blue-button" /></td>
+				</tr>
+			</table>
+		</form>
+		<br></br>
+		<div ngshow="isVisible"> {{message}}</div>
+		<a href="{{serviceData.originalURL}}">{{serviceData.shortenedURL}} </a>
+	</div>
+
+
+	<script
+		src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js"></script>
+	<script src="/js/render.js"></script>
+	<link href="/css/main.css" rel="stylesheet" />
+</body>
+</html>
