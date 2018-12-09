@@ -19,6 +19,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import com.cab.shortenurl.BootApplication;
 import com.cab.shortenurl.DTO.UrlDTO;
+import com.cab.shortenurl.service.ShortenUrlService;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -50,22 +51,52 @@ public class TestShortUrl {
 	}
 
 	@Test
-	public void test() {
+	public void testRetrieveShortUrl() {		
+		try {
+			String longURL = "http://facebook.com";
+			MvcResult mvcResult = getResult(longURL);
+			int status = 0;
+			if (mvcResult != null) {
+				status = mvcResult.getResponse().getStatus();
+			}
+			assertEquals(200, status);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * @return
+	 * @throws JsonProcessingException
+	 * @throws Exception
+	 */
+	public MvcResult getResult(String longURL) throws JsonProcessingException, Exception {
 		setUp();
 		String uri = "/shortenURL";
 		UrlDTO urlDTO = new UrlDTO();
-		urlDTO.setOriginalURL("http://facebook.com");
+		urlDTO.setOriginalURL(longURL);
 		urlDTO.setShortenedURL("");
 
 		String inputJson;
-		try {
-			inputJson = mapToJson(urlDTO);
-			MvcResult mvcResult = mvc.perform(
-					MockMvcRequestBuilders.post(uri).contentType(MediaType.APPLICATION_JSON_VALUE).content(inputJson))
-					.andReturn();
+		inputJson = mapToJson(urlDTO);
+		MvcResult mvcResult = mvc.perform(
+				MockMvcRequestBuilders.post(uri).contentType(MediaType.APPLICATION_JSON_VALUE).content(inputJson))
+				.andReturn();
+		return mvcResult;
+	}
 
-			int status = mvcResult.getResponse().getStatus();
-			assertEquals(200, status);
+	@Test
+	public void testRetrieveLongUrl() {		
+		try {
+			String longURL = "http://cabonline.com";
+			//get the longURL back from the map stored
+			ShortenUrlService service = new ShortenUrlService();
+			String retrievedLongURlFromMap = "";
+			UrlDTO responseDTO = service.generateShortURL(longURL);
+			if (responseDTO != null) {
+				retrievedLongURlFromMap = service.getLongURL(responseDTO.getShortenedURL());
+			}
+			assertEquals(longURL, retrievedLongURlFromMap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

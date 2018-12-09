@@ -2,6 +2,8 @@ package com.cab.shortenurl.service;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
@@ -17,16 +19,13 @@ public class ShortenUrlService {
 
 	private AtomicInteger counter = new AtomicInteger(10);
 
+	private Map<Long, String> short2LongURLMap = new HashMap<>();
+
 	/**
-	 * Method returns short url by performing following 
-	 * 1. Check if the url entered by user is a valid 
-	 * 2. Get a random number using AtomicInteger 
-	 * 3. Perform Base62 encode on this number and set as short url
+	 * Method returns short url by performing following 1. Check if the url entered
+	 * by user is a valid 2. Get a random number using AtomicInteger 3. Perform
+	 * Base62 encode on this number and set as short url
 	 * 
-	 * @param url
-	 * @return
-	 */
-	/**
 	 * @param url
 	 * @return
 	 */
@@ -39,13 +38,14 @@ public class ShortenUrlService {
 		if (isValidURL(url)) {
 			String[] tempArray = url.split("://");
 			String domain = null;
-			if ( tempArray[1].contains("www.")) {
+			if (tempArray[1].contains("www.")) {
 				domain = tempArray[1].split("\\.")[1];
 			} else {
 				domain = tempArray[1];
 			}
 			// get the random number
 			final long nextNumber = getNextNumber();
+			short2LongURLMap.put(nextNumber, url);
 			// convert the number to base62 and set it as shortUrl
 			String shortUrl = convertAndGetBase62(nextNumber);
 			urlDTO.setShortenedURL(tempArray[0] + "://" + domain.substring(0, 2) + "/" + shortUrl);
@@ -55,7 +55,8 @@ public class ShortenUrlService {
 	}
 
 	/**
-	 * Check whether the url entered by user is a valid 
+	 * Check whether the url entered by user is a valid
+	 * 
 	 * @param url
 	 * @return
 	 */
@@ -64,7 +65,7 @@ public class ShortenUrlService {
 		try {
 			URL u = new URL(url);
 			HttpURLConnection huc = (HttpURLConnection) u.openConnection();
-			//huc.setRequestMethod("GET");
+			// huc.setRequestMethod("GET");
 			huc.connect();
 			int code = huc.getResponseCode();
 			System.out.println(code);
@@ -82,6 +83,7 @@ public class ShortenUrlService {
 
 	/**
 	 * Method converts 'nextNumber' to Base 62 encode
+	 * 
 	 * @param nextNumber
 	 * @return
 	 */
@@ -107,5 +109,42 @@ public class ShortenUrlService {
 		return systemTime;
 	}
 
-	
+	/**
+	 * Method takes input , a shortURL, of format: http(s)://xx/base62Encode and
+	 * converts to base10. And then retrieves the long url stored in map
+	 * 
+	 * @param shortURL
+	 * @return
+	 */
+	public String getLongURL(String shortURL) {
+		String longURL = "";
+		if (shortURL != null && !shortURL.isEmpty()) {
+			String[] strList = shortURL.split("/");
+			String base62EncodeStr = strList[strList.length-1];
+			// retrieve base 10 encode value.
+			Long number = getDeciEncodeStr(base62EncodeStr);
+			if (short2LongURLMap.containsKey(number)) {
+				longURL = short2LongURLMap.get(number);
+			}
+		}
+		return longURL;
+
+	}
+
+	/**
+	 * Converts base62 encode to base10 encode.
+	 * 
+	 * @param base62EncodeStr
+	 * @return
+	 */
+	private long getDeciEncodeStr(String base62EncodeStr) {
+		long nBase10 = 0;
+		char[] chars = new StringBuilder(base62EncodeStr).toString().toCharArray();
+		for(int i=chars.length-1; i>=0; i--) {
+			int index = charSetStr.indexOf(chars[i]);
+			nBase10 += index * (long) Math.pow(base, i);
+		}
+		return nBase10;
+	}
+
 }
